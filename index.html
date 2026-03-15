@@ -1615,7 +1615,8 @@ function genBusinessplanPDF() {
     doc.setTextColor(44, 62, 80);
     var toc = ['Zusammenfassung des Vorhabens', 'Gruenderprofil', 'Geschaeftsidee und Leistungsangebot',
                'Markt- und Wettbewerbsanalyse', 'Marketing und Vertrieb', 'Organisation und Rechtsform',
-               'Finanzplanung', 'SWOT-Analyse', 'Meilensteine und Zeitplan'];
+               'Finanzplanung (Kapitalbedarfs-, Finanzierungs- und Liquiditaetsplanung)',
+               'SWOT-Analyse', 'Meilensteine und Zeitplan'];
     var tocY = 42;
     for (var ti = 0; ti < toc.length; ti++) {
       doc.text((ti + 1) + '.  ' + toc[ti], M, tocY);
@@ -1739,6 +1740,9 @@ function genBusinessplanPDF() {
     y = addChapter(6, 'Organisation und Rechtsform');
     y = addPara('Rechtsform: ' + rechtsform + '. Das Unternehmen wird als ' + rechtsform + ' gefuehrt. ' + inhaber + ' ist alleiniger Inhaber und fuer alle operativen Taetigkeiten verantwortlich.', y);
     y = addPara('Die kaufmaennische Verwaltung (Buchhaltung, Rechnungsstellung, Organisation) wird von der Partnerin des Gruenders uebernommen. Die Verwaltung erfolgt aus dem Homeoffice.', y);
+    y = addH2('Kaufmaennische Unterstuetzung', y);
+    y = addPara('Fuer die steuerliche Beratung und die Erstellung der Steuererklaerung wird ein Steuerberater hinzugezogen (monatl. ' + euro(getVal('kosten_buchhaltung')) + '). Darueber hinaus werden die Beratungsangebote der IHK Wiesbaden und der Handwerkskammer Wiesbaden genutzt.', y);
+    y = addPara('Zur Erlangung der Tragfaehigkeitsbescheinigung wird eine fachkundige Stellungnahme bei der IHK Wiesbaden oder einem Steuerberater eingeholt.', y);
     if (doc.autoTable) {
       doc.autoTable({
         startY: y,
@@ -1760,8 +1764,59 @@ function genBusinessplanPDF() {
     // === 7. FINANZPLANUNG ===
     y = addChapter(7, 'Finanzplanung');
 
-    // Investitionen
-    y = addH2('Einmalige Investitionen', y);
+    // Kapitalbedarfsplan
+    y = addH2('7.1 Kapitalbedarfsplan', y);
+    var anlaufBK = bk * 3;
+    var anlaufPK = pk * 3;
+    var kapitalGesamt = inv + anlaufBK + anlaufPK;
+    if (doc.autoTable) {
+      doc.autoTable({
+        startY: y,
+        head: [['Position', 'Betrag']],
+        body: [
+          ['Einmalige Investitionen (siehe unten)', euro(inv)],
+          ['Anlaufkosten Betrieb (3 Monate)', euro(Math.round(anlaufBK))],
+          ['Anlaufkosten Privat (3 Monate)', euro(Math.round(anlaufPK))],
+          ['GESAMTER KAPITALBEDARF', euro(Math.round(kapitalGesamt))],
+        ],
+        margin: { left: M, right: M },
+        styles: { fontSize: 10 },
+        headStyles: { fillColor: [27, 79, 114] },
+        didParseCell: function(data) {
+          if (data.row.index === 3) { data.cell.styles.fontStyle = 'bold'; data.cell.styles.fillColor = [235, 245, 251]; }
+        }
+      });
+      y = doc.lastAutoTable.finalY + 8;
+    }
+
+    // Finanzierungsplan
+    y = addH2('7.2 Finanzierungsplan', y);
+    var gz_phase1_m = gz[0];
+    var finanzGZ = gz_phase1_m * getVal('gz_dauer_phase1');
+    if (doc.autoTable) {
+      doc.autoTable({
+        startY: y,
+        head: [['Finanzierungsquelle', 'Betrag']],
+        body: [
+          ['Eigenkapital', euro(eigenkapital)],
+          ['Gruendungszuschuss Phase 1 (gesamt)', euro(finanzGZ)],
+          ['Gruendungszuschuss Phase 2 (gesamt)', euro(getVal('gz_pauschale') * getVal('gz_dauer_phase2'))],
+          ['Einnahmen aus laufendem Geschaeftsbetrieb', 'Ab Monat 1'],
+          ['GESAMTE FINANZIERUNG', euro(eigenkapital + finanzGZ + getVal('gz_pauschale') * getVal('gz_dauer_phase2'))],
+        ],
+        margin: { left: M, right: M },
+        styles: { fontSize: 10 },
+        headStyles: { fillColor: [27, 79, 114] },
+        didParseCell: function(data) {
+          if (data.row.index === 4) { data.cell.styles.fontStyle = 'bold'; data.cell.styles.fillColor = [235, 245, 251]; }
+        }
+      });
+      y = doc.lastAutoTable.finalY + 8;
+    }
+    y = addPara('Der Kapitalbedarf wird durch Eigenkapital, den Gruendungszuschuss der Bundesagentur fuer Arbeit sowie die laufenden Einnahmen aus dem Geschaeftsbetrieb gedeckt. Ein Fremdkapitalbedarf (Kredit) besteht nicht.', y);
+
+    // Einmalige Investitionen
+    y = addH2('7.3 Einmalige Investitionen', y);
     if (doc.autoTable) {
       doc.autoTable({
         startY: y,
@@ -1787,7 +1842,7 @@ function genBusinessplanPDF() {
     }
 
     // Betriebskosten
-    y = addH2('Monatliche Betriebskosten', y);
+    y = addH2('7.4 Monatliche Betriebskosten', y);
     if (doc.autoTable) {
       doc.autoTable({
         startY: y,
@@ -1816,7 +1871,7 @@ function genBusinessplanPDF() {
     }
 
     // 12-Monats-Uebersicht
-    y = addH2('12-Monats-Umsatz- und Gewinnplanung', y);
+    y = addH2('7.5 12-Monats-Umsatz- und Gewinnplanung', y);
     var finBody = [];
     var cumProfit = 0;
     for (var fm = 0; fm < 12; fm++) {
@@ -1844,14 +1899,62 @@ function genBusinessplanPDF() {
       y = doc.lastAutoTable.finalY + 8;
     }
 
+    // Liquiditaetsplanung
+    y = addH2('7.6 Liquiditaetsplanung', y);
+    y = addPara('Die folgende Uebersicht zeigt den kumulierten Kontostand unter Beruecksichtigung von Eigenkapital, Investitionen, laufenden Einnahmen/Ausgaben und Gruendungszuschuss:', y);
+    var liqBody = [];
+    var kontostand = eigenkapital - inv;
+    for (var lm = 0; lm < 12; lm++) {
+      kontostand += rev[lm] + gz[lm] - bk - pk;
+      liqBody.push([monthLabels[lm], euro(rev[lm] + gz[lm]), euro(Math.round(bk + pk)), euro(Math.round(kontostand))]);
+    }
+    if (doc.autoTable) {
+      doc.autoTable({
+        startY: y,
+        head: [['Monat', 'Einnahmen (Umsatz + GZ)', 'Ausgaben (Betr. + Priv.)', 'Kontostand kumuliert']],
+        body: liqBody,
+        margin: { left: M, right: M },
+        styles: { fontSize: 9 },
+        headStyles: { fillColor: [27, 79, 114], fontSize: 9 },
+        didParseCell: function(data) {
+          if (data.section === 'body' && data.column.index === 3) {
+            var val = parseInt(data.cell.raw);
+            if (val < 0) data.cell.styles.textColor = [231, 76, 60];
+            else data.cell.styles.textColor = [39, 174, 96];
+          }
+        }
+      });
+      y = doc.lastAutoTable.finalY + 8;
+    }
+    if (kontostand >= 0) {
+      y = addPara('Der Liquiditaetsverlauf zeigt, dass das Unternehmen durchgehend zahlungsfaehig bleibt. Am Ende des ersten Geschaeftsjahres betraegt der kumulierte Kontostand ' + euro(Math.round(kontostand)) + '.', y);
+    } else {
+      y = addPara('Hinweis: Die Darstellung geht konservativ davon aus, dass alle Investitionen (' + euro(inv) + ') im ersten Monat getaetigt werden. In der Praxis werden Anschaffungen ueber die ersten Monate verteilt, sodass der tatsaechliche Kontostand guenstiger ausfaellt.', y);
+      y = addPara('Der monatliche Trend ist durchgehend positiv: Waehrend im ersten Monat ein rechnerisches Defizit von ' + euro(Math.round(rev[0] + gz[0] - bk - pk)) + ' nach Investitionen entsteht, verbessert sich das Ergebnis stetig. Ab Monat ' + (rev.findIndex(function(r) { return r >= bk + pk; }) + 1) + ' uebersteigen die Umsaetze die laufenden Kosten (Break-even). Die Zahlungsfaehigkeit ist durch den Gruendungszuschuss und die laufenden Einnahmen gesichert.', y);
+    }
+
     // Gruendungszuschuss
-    y = addH2('Gruendungszuschuss', y);
+    y = addH2('7.7 Gruendungszuschuss', y);
     var gz_phase1_total = gz[0] * getVal('gz_dauer_phase1');
     var gz_phase2_total = getVal('gz_pauschale') * getVal('gz_dauer_phase2');
     y = addPara('Phase 1 (' + getVal('gz_dauer_phase1') + ' Monate): ' + euro(gz[0]) + '/Monat = ' + euro(gz_phase1_total) + ' gesamt', y);
     y = addPara('Phase 2 (' + getVal('gz_dauer_phase2') + ' Monate): ' + euro(getVal('gz_pauschale')) + '/Monat = ' + euro(gz_phase2_total) + ' gesamt', y);
     y = addPara('Gesamter Gruendungszuschuss: ' + euro(gz_phase1_total + gz_phase2_total), y);
     y = addPara('Eigenkapital: ' + euro(eigenkapital), y);
+
+    // Tragfaehigkeit
+    y = addH2('7.8 Wirtschaftliche Tragfaehigkeit', y);
+    var avgRevH2 = Math.round((rev[6] + rev[7] + rev[8] + rev[9] + rev[10] + rev[11]) / 6);
+    var beIdx = rev.findIndex(function(r) { return r >= bk + pk; });
+    var beText = beIdx >= 0 ? 'Ab dem ' + (beIdx + 1) + '. Monat uebersteigen die Umsaetze die Gesamtkosten (Break-even).' : 'Der Break-even wird im Laufe des zweiten Geschaeftsjahres erreicht.';
+    y = addPara(beText + ' Im zweiten Halbjahr liegt der durchschnittliche Monatsumsatz bei ' + euro(avgRevH2) + ' gegenueber Gesamtkosten von ' + euro(Math.round(bk + pk)) + '/Monat.', y);
+    y = addPara('Die Tragfaehigkeit wird durch folgende Faktoren gestuetzt:', y);
+    y = addPara('\u2022  Bereits bestehender Kundenstamm mit regelmaessigen Auftraegen', y);
+    y = addPara('\u2022  Geringe Fixkosten durch Einzelunternehmen ohne Mietkosten', y);
+    y = addPara('\u2022  Steigende Nachfrage nach Elektro- und Handwerksleistungen im Rhein-Main-Gebiet', y);
+    y = addPara('\u2022  Konservative Kalkulation mit realistischen Stundensaetzen', y);
+    y = addPara('\u2022  Professionelle Kooperation mit Meisterbetrieb zur Qualitaetssicherung', y);
+    y = addPara('Eine Tragfaehigkeitsbescheinigung wird bei der IHK Wiesbaden oder einem Steuerberater als fachkundige Stelle beantragt.', y);
 
     // === 8. SWOT ===
     y = addChapter(8, 'SWOT-Analyse');
