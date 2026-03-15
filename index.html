@@ -1,0 +1,2283 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
+  <title>M&S Businessplan Generator</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-user-select: text;
+      user-select: text;
+      -webkit-tap-highlight-color: rgba(0,0,0,0.1);
+    }
+
+    html, body {
+      width: 100%;
+      height: auto;
+      background: #f5f5f5;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+      color: #333;
+    }
+
+    #errorbox {
+      display: none;
+      background: #FFE0E0;
+      color: #C00;
+      padding: 12px 16px;
+      font-size: 14px;
+      font-family: monospace;
+      white-space: pre-wrap;
+      border-bottom: 3px solid red;
+      position: relative;
+      z-index: 9999;
+      word-break: break-word;
+    }
+
+    #errorbox strong {
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    header {
+      background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+      color: white;
+      padding: 16px;
+      text-align: center;
+      border-bottom: 4px solid #3498db;
+    }
+
+    header h1 {
+      font-size: 24px;
+      margin-bottom: 4px;
+    }
+
+    header p {
+      font-size: 13px;
+      opacity: 0.9;
+    }
+
+    #save-indicator {
+      display: none;
+      position: fixed;
+      top: 8px;
+      right: 12px;
+      background: #27ae60;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      z-index: 10000;
+      animation: fadeInOut 1.5s ease forwards;
+    }
+
+    @keyframes fadeInOut {
+      0% { opacity: 0; transform: translateY(-8px); }
+      20% { opacity: 1; transform: translateY(0); }
+      80% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+
+    nav {
+      display: flex;
+      overflow-x: auto;
+      background: #fff;
+      border-bottom: 2px solid #D5D8DC;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .navbtn {
+      flex: 1;
+      min-width: 80px;
+      padding: 12px 8px;
+      border: none;
+      background: #fff;
+      color: #666;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+      -webkit-appearance: none;
+      appearance: none;
+      min-height: 48px;
+    }
+
+    .navbtn.active {
+      color: #3498db;
+      border-bottom-color: #3498db;
+      background: #EBF5FB;
+    }
+
+    .content {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    .tab {
+      display: none;
+    }
+
+    .tab.active {
+      display: block;
+    }
+
+    .section {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .section h2 {
+      font-size: 18px;
+      color: #2c3e50;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #3498db;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 4px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #D5D8DC;
+      border-radius: 8px;
+      font-size: 16px;
+      background: #FAFAFA;
+      -webkit-appearance: none;
+      appearance: none;
+      min-height: 48px;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      border-color: #3498db;
+      outline: none;
+      background: white;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 768px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 14px 24px;
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      min-height: 48px;
+      margin: 4px;
+      -webkit-appearance: none;
+      appearance: none;
+      transition: opacity 0.2s;
+    }
+
+    .btn:active { opacity: 0.7; }
+
+    .btn-secondary {
+      background: #95a5a6;
+    }
+
+    .btn-success {
+      background: #27ae60;
+    }
+
+    .btn-group {
+      display: flex;
+      justify-content: space-between;
+      padding: 16px 0;
+      gap: 8px;
+    }
+
+    .btn.loading {
+      opacity: 0.7;
+      pointer-events: none;
+      position: relative;
+    }
+
+    .btn.loading::after {
+      content: '';
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid white;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .list-item {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 12px;
+      background: #F8F9FA;
+      border: 1px solid #E5E7EB;
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+
+    .list-item .list-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    @media (max-width: 768px) {
+      .list-item .list-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .list-item input, .list-item select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #D5D8DC;
+      border-radius: 6px;
+      font-size: 15px;
+      min-height: 40px;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
+    .list-item .delete-btn {
+      align-self: flex-end;
+      padding: 6px 14px;
+      background: #e74c3c;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      min-height: 36px;
+    }
+
+    .add-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .add-row input {
+      flex: 1;
+      padding: 10px;
+      border: 2px solid #D5D8DC;
+      border-radius: 8px;
+      font-size: 15px;
+      min-height: 44px;
+    }
+
+    .add-row button {
+      padding: 10px 16px;
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      min-height: 44px;
+      white-space: nowrap;
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .kpi-card {
+      background: #EBF5FB;
+      padding: 12px;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .kpi-card .kpi-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: #2c3e50;
+    }
+
+    .kpi-card .kpi-label {
+      font-size: 11px;
+      color: #666;
+    }
+
+    .info-box {
+      background: #EBF5FB;
+      border-left: 4px solid #3498db;
+      padding: 16px;
+      border-radius: 0 8px 8px 0;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+
+    .stunden-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    @media (max-width: 768px) {
+      .stunden-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    .stunden-grid .sg-item {
+      text-align: center;
+    }
+
+    .stunden-grid .sg-item label {
+      font-size: 11px;
+      color: #666;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .stunden-grid .sg-item input {
+      width: 100%;
+      padding: 8px 4px;
+      text-align: center;
+      border: 1px solid #D5D8DC;
+      border-radius: 6px;
+      font-size: 15px;
+      min-height: 40px;
+    }
+
+    .photo-preview {
+      max-width: 120px;
+      max-height: 150px;
+      border-radius: 8px;
+      margin-top: 8px;
+      display: none;
+    }
+
+    .hint {
+      font-size: 12px;
+      color: #666;
+      display: block;
+      margin-top: 4px;
+    }
+
+    #toast-container {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .toast {
+      padding: 12px 24px;
+      border-radius: 8px;
+      color: white;
+      font-size: 14px;
+      font-weight: 500;
+      animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards;
+      max-width: 90vw;
+      text-align: center;
+    }
+
+    .toast.success { background: #27ae60; }
+    .toast.error { background: #e74c3c; }
+    .toast.info { background: #3498db; }
+
+    @keyframes toastIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes toastOut { from { opacity: 1; } to { opacity: 0; } }
+  </style>
+</head>
+<body>
+
+<div id="errorbox">
+  <strong>Fehler:</strong> <span id="errormsg"></span>
+</div>
+
+<div id="save-indicator">Gespeichert</div>
+<div id="toast-container"></div>
+
+<header>
+  <h1>M&S Businessplan Generator</h1>
+  <p>Elektro- & Hausmeisterservice • Eltville am Rhein</p>
+</header>
+
+<nav>
+  <button type="button" id="btn-firma" class="navbtn active" onclick="goTab('firma')">Firma</button>
+  <button type="button" id="btn-lebenslauf" class="navbtn" onclick="goTab('lebenslauf')">Lebenslauf</button>
+  <button type="button" id="btn-leistungen" class="navbtn" onclick="goTab('leistungen')">Leistungen</button>
+  <button type="button" id="btn-finanzen" class="navbtn" onclick="goTab('finanzen')">Finanzen</button>
+  <button type="button" id="btn-kosten" class="navbtn" onclick="goTab('kosten')">Kosten</button>
+  <button type="button" id="btn-generieren" class="navbtn" onclick="goTab('generieren')">Generieren</button>
+</nav>
+
+<div class="content">
+
+<!-- TAB: FIRMA -->
+<div id="tab-firma" class="tab active">
+  <div class="section">
+    <h2>Firmeninformationen</h2>
+
+    <div class="form-group">
+      <label>Firmenname</label>
+      <input type="text" id="firma_name" value="M&S Elektro- & Hausmeisterservice" placeholder="Firmenname">
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Inhaber/In</label>
+        <input type="text" id="firma_inhaber" value="Mohammad Shahir Maria" placeholder="Name">
+      </div>
+      <div class="form-group">
+        <label>Standort</label>
+        <input type="text" id="firma_standort" value="Eltville am Rhein" placeholder="Stadt">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Bundesland</label>
+        <input type="text" id="firma_bundesland" value="Hessen" placeholder="Bundesland">
+      </div>
+      <div class="form-group">
+        <label>Landkreis</label>
+        <input type="text" id="firma_kreis" value="Rheingau-Taunus-Kreis" placeholder="Landkreis">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Rechtsform</label>
+        <select id="firma_rechtsform">
+          <option value="Einzelunternehmen" selected>Einzelunternehmen</option>
+          <option value="GbR">GbR</option>
+          <option value="GmbH">GmbH</option>
+          <option value="KG">KG</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Gründung Vollzeit</label>
+        <input type="date" id="firma_gruendung" value="2026-07-01">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Meisterbetrieb (Kooperation)</label>
+      <input type="text" id="firma_meisterbetrieb" value="" placeholder="Name des Meisterbetriebs">
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Telefon</label>
+        <input type="tel" id="firma_telefon" value="" placeholder="Telefonnummer">
+      </div>
+      <div class="form-group">
+        <label>E-Mail</label>
+        <input type="email" id="firma_email" value="" placeholder="email@beispiel.de">
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Gründer – Persönliche Daten</h2>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Geburtsdatum</label>
+        <input type="date" id="gruender_geburtsdatum" value="1998-07-23">
+      </div>
+      <div class="form-group">
+        <label>Geburtsort</label>
+        <input type="text" id="gruender_geburtsort" value="" placeholder="Geburtsort">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Staatsangehörigkeit</label>
+        <input type="text" id="gruender_staatsangehoerigkeit" value="deutsch" placeholder="z.B. deutsch">
+      </div>
+      <div class="form-group">
+        <label>Familienstand</label>
+        <input type="text" id="gruender_familienstand" value="Verlobt" placeholder="z.B. ledig, verheiratet">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Ausbildung</label>
+        <input type="text" id="gruender_ausbildung" value="Elektrotechniker (Syrien)" placeholder="z.B. Elektrotechniker">
+      </div>
+      <div class="form-group">
+        <label>Berufserfahrung (Jahre)</label>
+        <input type="number" id="gruender_berufserfahrung" value="5" min="0">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Letzte Anstellung</label>
+        <input type="text" id="gruender_letzte_anstellung" value="Jean Müller GmbH" placeholder="Firma">
+      </div>
+      <div class="form-group">
+        <label>Position</label>
+        <input type="text" id="gruender_position" value="Produktionshelfer" placeholder="Jobtitel">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Dauer letzte Anstellung</label>
+      <input type="text" id="gruender_dauer" value="3-5 Jahre" placeholder="z.B. 3-5 Jahre">
+    </div>
+
+    <div class="form-group">
+      <label>Führerschein</label>
+      <input type="text" id="fuehrerschein" value="Klasse B" placeholder="z.B. Klasse B, BE">
+    </div>
+
+    <div class="form-group">
+      <label>Foto (optional)</label>
+      <input type="file" accept="image/*" onchange="handlePhotoUpload(event)">
+      <img id="photoPreview" class="photo-preview" src="" alt="Vorschau">
+    </div>
+  </div>
+
+  <div class="btn-group">
+    <span></span>
+    <button type="button" class="btn" onclick="goTab('lebenslauf')">Weiter</button>
+  </div>
+</div>
+
+<!-- TAB: LEBENSLAUF -->
+<div id="tab-lebenslauf" class="tab">
+  <div class="section">
+    <h2>Berufserfahrung</h2>
+    <div id="berufserfahrung-list"></div>
+    <button type="button" class="btn" onclick="addBeruf()" style="margin-top:8px">+ Berufserfahrung hinzufügen</button>
+  </div>
+
+  <div class="section">
+    <h2>Ausbildung</h2>
+    <div id="ausbildung-list"></div>
+    <button type="button" class="btn" onclick="addAusbildung()" style="margin-top:8px">+ Ausbildung hinzufügen</button>
+  </div>
+
+  <div class="section">
+    <h2>Sprachen</h2>
+    <div id="sprachen-list"></div>
+    <button type="button" class="btn" onclick="addSprache()" style="margin-top:8px">+ Sprache hinzufügen</button>
+  </div>
+
+  <div class="btn-group">
+    <button type="button" class="btn btn-secondary" onclick="goTab('firma')">Zurück</button>
+    <button type="button" class="btn" onclick="goTab('leistungen')">Weiter</button>
+  </div>
+</div>
+
+<!-- TAB: LEISTUNGEN -->
+<div id="tab-leistungen" class="tab">
+  <div class="section">
+    <h2>Elektro-Leistungen</h2>
+    <div id="elektro-list"></div>
+    <div class="add-row">
+      <input type="text" id="elektro-input" placeholder="Neue Leistung">
+      <button type="button" onclick="addToList('elektro')">Hinzufügen</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Hausmeister-Leistungen</h2>
+    <div id="hausmeister-list"></div>
+    <div class="add-row">
+      <input type="text" id="hausmeister-input" placeholder="Neue Leistung">
+      <button type="button" onclick="addToList('hausmeister')">Hinzufügen</button>
+    </div>
+  </div>
+
+  <div class="btn-group">
+    <button type="button" class="btn btn-secondary" onclick="goTab('lebenslauf')">Zurück</button>
+    <button type="button" class="btn" onclick="goTab('finanzen')">Weiter</button>
+  </div>
+</div>
+
+<!-- TAB: FINANZEN -->
+<div id="tab-finanzen" class="tab">
+  <div class="section">
+    <h2>Finanzielle Grundwerte</h2>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Stundensatz Elektro (€)</label>
+        <input type="number" id="fin_stundensatz_elektro" value="45" min="0" step="1">
+      </div>
+      <div class="form-group">
+        <label>Stundensatz Hausmeister (€)</label>
+        <input type="number" id="fin_stundensatz_hausmeister" value="35" min="0" step="1">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Arbeitstage pro Monat</label>
+        <input type="number" id="fin_arbeitstage" value="22" min="1" max="31">
+      </div>
+      <div class="form-group">
+        <label>Materialkostenpauschale (%)</label>
+        <input type="number" id="fin_materialkostenpauschale" value="15" min="0" max="100">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Anteil Elektro (%)</label>
+        <input type="number" id="fin_anteil_elektro" value="60" min="0" max="100">
+      </div>
+      <div class="form-group">
+        <label>Anteil Hausmeister (%)</label>
+        <input type="number" id="fin_anteil_hausmeister" value="40" min="0" max="100">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Eigenkapital (€)</label>
+      <input type="number" id="fin_eigenkapital" value="3000" min="0">
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Fakturierbare Stunden pro Tag (12 Monate)</h2>
+    <p style="font-size:13px;color:#666;margin-bottom:12px">Erwartete fakturierbare Stunden pro Arbeitstag. Typisch: Start mit 4h, nach 12 Monaten 6h.</p>
+    <div class="stunden-grid">
+      <div class="sg-item"><label>M1</label><input type="number" id="fin_stunden_m1" value="4.0" min="0" max="12" step="0.1"></div>
+      <div class="sg-item"><label>M2</label><input type="number" id="fin_stunden_m2" value="4.2" min="0" max="12" step="0.1"></div>
+      <div class="sg-item"><label>M3</label><input type="number" id="fin_stunden_m3" value="4.4" min="0" max="12" step="0.1"></div>
+      <div class="sg-item"><label>M4</label><input type="number" id="fin_stunden_m4" value="4.6" min="0" max="12" step="0.1"></div>
+      <div class="sg-item"><label>M5</label><input type="number" id="fin_stunden_m5" value="4.8" min="0" max="12" step="0.1"></div>
+      <div class="sg-item"><label>M6</label><input type="number" id="fin_stunden_m6" value="5.0" min="0" max="12" step="0.1"></div>
+      <div class="sg-item"><label>M7</label><input type="number" id="fin_stunden_m7" value="5.2" min="0" max="12" step="0.1"></div>
+      <div class="sg-item"><label>M8</label><input type="number" id="fin_stunden_m8" value="5.4" min="0" max="12" step="0.1"></div>
+      <div class="sg-item"><label>M9</label><input type="number" id="fin_stunden_m9" value="5.6" min="0" max="12" step="0.1"></div>
+      <div class="sg-item"><label>M10</label><input type="number" id="fin_stunden_m10" value="5.8" min="0" max="12" step="0.1"></div>
+      <div class="sg-item"><label>M11</label><input type="number" id="fin_stunden_m11" value="6.0" min="0" max="12" step="0.1"></div>
+      <div class="sg-item"><label>M12</label><input type="number" id="fin_stunden_m12" value="6.0" min="0" max="12" step="0.1"></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Live-Vorschau</h2>
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-value"><span id="kpi-umsatz-m1">0</span> €</div>
+        <div class="kpi-label">Umsatz Monat 1</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value"><span id="kpi-umsatz-m12">0</span> €</div>
+        <div class="kpi-label">Umsatz Monat 12</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value"><span id="kpi-betriebskosten">0</span> €</div>
+        <div class="kpi-label">Betriebskosten/Mt</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value"><span id="kpi-investitionen">0</span> €</div>
+        <div class="kpi-label">Investitionen</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value"><span id="kpi-gz">0</span> €</div>
+        <div class="kpi-label">Gründungszuschuss/Mt</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-value" id="kpi-gewinn-m12-wrap"><span id="kpi-gewinn-m12">0</span> €</div>
+        <div class="kpi-label">Gewinn Monat 12</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-group">
+    <button type="button" class="btn btn-secondary" onclick="goTab('leistungen')">Zurück</button>
+    <button type="button" class="btn" onclick="goTab('kosten')">Weiter</button>
+  </div>
+</div>
+
+<!-- TAB: KOSTEN -->
+<div id="tab-kosten" class="tab">
+  <div class="section">
+    <h2>Monatliche Betriebskosten</h2>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Miete / Büro (€)</label>
+        <input type="number" id="kosten_miete" value="0" min="0">
+      </div>
+      <div class="form-group">
+        <label>Fahrzeugkosten (€)</label>
+        <input type="number" id="kosten_fahrzeug" value="450" min="0">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Versicherungen Betrieb (€)</label>
+        <input type="number" id="kosten_versicherungen" value="180" min="0">
+      </div>
+      <div class="form-group">
+        <label>Werkzeug-Abschreibung (€)</label>
+        <input type="number" id="kosten_werkzeug_abschreibung" value="150" min="0">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Telefon & Internet (€)</label>
+        <input type="number" id="kosten_telefon" value="60" min="0">
+      </div>
+      <div class="form-group">
+        <label>Buchhaltung & Steuerberater (€)</label>
+        <input type="number" id="kosten_buchhaltung" value="150" min="0">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Marketing & Werbung (€)</label>
+        <input type="number" id="kosten_marketing" value="200" min="0">
+      </div>
+      <div class="form-group">
+        <label>Verbrauchsmaterial (€)</label>
+        <input type="number" id="kosten_verbrauchsmaterial" value="100" min="0">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>KFZ-Versicherung & Steuer (€)</label>
+        <input type="number" id="kosten_kfz_versicherung_steuer" value="120" min="0">
+      </div>
+      <div class="form-group">
+        <label>Sonstige (€)</label>
+        <input type="number" id="kosten_sonstige" value="100" min="0">
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Monatliche Privatkosten</h2>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Krankenversicherung (€)</label>
+        <input type="number" id="kosten_krankenversicherung" value="450" min="0">
+      </div>
+      <div class="form-group">
+        <label>Rentenversicherung (€)</label>
+        <input type="number" id="kosten_rentenversicherung" value="200" min="0">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Lebenshaltungskosten (€)</label>
+      <input type="number" id="kosten_lebenshaltung" value="2000" min="0">
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Einmalige Investitionen</h2>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Werkzeug & Geräte (€)</label>
+        <input type="number" id="inv_werkzeug" value="5000" min="0">
+      </div>
+      <div class="form-group">
+        <label>Transporter Anzahlung (€)</label>
+        <input type="number" id="inv_transporter" value="3000" min="0">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Marketing Erstausstattung (€)</label>
+        <input type="number" id="inv_marketing" value="1500" min="0">
+      </div>
+      <div class="form-group">
+        <label>Arbeitskleidung & Schutz (€)</label>
+        <input type="number" id="inv_arbeitskleidung" value="500" min="0">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Laptop & Software (€)</label>
+        <input type="number" id="inv_laptop" value="1000" min="0">
+      </div>
+      <div class="form-group">
+        <label>Reserve (€)</label>
+        <input type="number" id="inv_reserve" value="1000" min="0">
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>Gründungszuschuss</h2>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>ALG1 Tagessatz (€)</label>
+        <input type="number" id="gz_alg1_tagessatz" value="35" min="0" step="0.1">
+      </div>
+      <div class="form-group">
+        <label>Pauschale Phase 1 (€)</label>
+        <input type="number" id="gz_pauschale" value="300" min="0">
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Dauer Phase 1 (Monate)</label>
+        <input type="number" id="gz_dauer_phase1" value="6" min="1">
+      </div>
+      <div class="form-group">
+        <label>Dauer Phase 2 (Monate)</label>
+        <input type="number" id="gz_dauer_phase2" value="9" min="0">
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-group">
+    <button type="button" class="btn btn-secondary" onclick="goTab('finanzen')">Zurück</button>
+    <button type="button" class="btn" onclick="goTab('generieren')">Weiter</button>
+  </div>
+</div>
+
+<!-- TAB: GENERIEREN -->
+<div id="tab-generieren" class="tab">
+  <div class="section">
+    <h2>Businessplan generieren</h2>
+    <p style="margin-bottom:16px;color:#666">Erstellen Sie verschiedene Dokumente aus Ihren Angaben:</p>
+
+    <button type="button" id="btn-gen-bp" class="btn btn-success" onclick="startGen('bp')">Businessplan PDF</button>
+    <button type="button" id="btn-gen-excel" class="btn btn-success" onclick="startGen('excel')">Finanzplan Excel</button>
+    <button type="button" id="btn-gen-cv" class="btn btn-success" onclick="startGen('cv')">Lebenslauf PDF</button>
+    <button type="button" id="btn-gen-all" class="btn" onclick="startGen('all')">Alles generieren</button>
+  </div>
+
+  <div class="section">
+    <h2>Daten speichern & laden</h2>
+
+    <button type="button" class="btn btn-secondary" onclick="saveData()">Daten als JSON speichern</button>
+
+    <div class="form-group" style="margin-top:16px">
+      <label>Daten laden (JSON-Datei)</label>
+      <input type="file" id="load-data" accept=".json" onchange="loadData(event)">
+    </div>
+  </div>
+
+  <div class="info-box">
+    <strong>Hinweis:</strong> Alle Ihre Eingaben werden nur lokal im Browser verarbeitet. Es werden keine Daten an Server übertragen.
+  </div>
+
+  <div class="btn-group">
+    <button type="button" class="btn btn-secondary" onclick="goTab('kosten')">Zurück</button>
+  </div>
+</div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+<script>
+// ===== ERROR HANDLER =====
+window.onerror = function(msg, url, line, col, err) {
+  try {
+    var box = document.getElementById('errorbox');
+    var span = document.getElementById('errormsg');
+    if (box && span) {
+      box.style.display = 'block';
+      span.textContent = (span.textContent ? span.textContent + '\n' : '') + msg + ' (Zeile ' + line + ')';
+    }
+  } catch(e) { console.error('Error handler failed:', e); }
+  return false;
+};
+
+// ===== GLOBAL DATA =====
+var globalPhotoData = null;
+var berufserfahrungData = [
+  {von: '2022', bis: '2025', firma: 'Jean Mueller GmbH', position: 'Produktionshelfer', aufgaben: 'Fertigung, Qualitaetskontrolle'},
+  {von: '2020', bis: '2022', firma: 'Selbstaendig (Nebengewerbe)', position: 'Elektro- & Hausmeisterservice', aufgaben: 'Elektroinstallationen, Hausmeisterarbeiten'}
+];
+var ausbildungData = [
+  {von: '2014', bis: '2018', schule: 'Technische Ausbildung (Syrien)', abschluss: 'Elektrotechniker'}
+];
+var sprachenData = [
+  {sprache: 'Deutsch', niveau: 'B2'},
+  {sprache: 'Arabisch', niveau: 'Muttersprache'}
+];
+var elektroData = [
+  'Kabelverlegung (Netzwerk + Strom)',
+  'Schlitze stemmen',
+  'Steckdosen setzen',
+  'Vorbereitende Elektroarbeiten (in Kooperation mit Meisterbetrieb)'
+];
+var hausmeisterData = [
+  'Bodenarbeiten',
+  'Tapezieren',
+  'Streichen',
+  'Reparaturen',
+  'Kuechenmontage',
+  'Allgemeine Instandhaltung'
+];
+
+// ===== TOAST =====
+function showToast(msg, type) {
+  var container = document.getElementById('toast-container');
+  var toast = document.createElement('div');
+  toast.className = 'toast ' + (type || 'info');
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 3200);
+}
+
+// ===== NAVIGATION =====
+function goTab(name) {
+  var tabs = document.querySelectorAll('.tab');
+  var btns = document.querySelectorAll('.navbtn');
+  for (var i = 0; i < tabs.length; i++) {
+    tabs[i].style.display = 'none';
+    tabs[i].classList.remove('active');
+    if (btns[i]) btns[i].classList.remove('active');
+  }
+  var target = document.getElementById('tab-' + name);
+  if (target) { target.style.display = 'block'; target.classList.add('active'); }
+  var btn = document.getElementById('btn-' + name);
+  if (btn) btn.classList.add('active');
+  window.scrollTo(0, 0);
+  if (name === 'finanzen' || name === 'generieren') calcPreview();
+}
+
+// ===== PHOTO =====
+function handlePhotoUpload(event) {
+  var file = event.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    globalPhotoData = e.target.result;
+    var preview = document.getElementById('photoPreview');
+    if (preview) { preview.src = globalPhotoData; preview.style.display = 'block'; }
+  };
+  reader.readAsDataURL(file);
+}
+
+// ===== EDITABLE LIST RENDERERS =====
+function renderBerufserfahrung() {
+  var container = document.getElementById('berufserfahrung-list');
+  if (!container) return;
+  container.innerHTML = '';
+  for (var i = 0; i < berufserfahrungData.length; i++) {
+    var item = berufserfahrungData[i];
+    var div = document.createElement('div');
+    div.className = 'list-item';
+    div.innerHTML =
+      '<div class="list-row">' +
+        '<input type="text" value="' + esc(item.von) + '" placeholder="Von (Jahr)" oninput="berufserfahrungData[' + i + '].von=this.value;triggerAutoSave()">' +
+        '<input type="text" value="' + esc(item.bis) + '" placeholder="Bis (Jahr)" oninput="berufserfahrungData[' + i + '].bis=this.value;triggerAutoSave()">' +
+      '</div>' +
+      '<input type="text" value="' + esc(item.firma) + '" placeholder="Firma" oninput="berufserfahrungData[' + i + '].firma=this.value;triggerAutoSave()">' +
+      '<input type="text" value="' + esc(item.position) + '" placeholder="Position" oninput="berufserfahrungData[' + i + '].position=this.value;triggerAutoSave()">' +
+      '<input type="text" value="' + esc(item.aufgaben) + '" placeholder="Aufgaben" oninput="berufserfahrungData[' + i + '].aufgaben=this.value;triggerAutoSave()">' +
+      '<button type="button" class="delete-btn" onclick="removeBeruf(' + i + ')">Entfernen</button>';
+    container.appendChild(div);
+  }
+}
+
+function addBeruf() {
+  berufserfahrungData.push({von: '', bis: '', firma: '', position: '', aufgaben: ''});
+  renderBerufserfahrung();
+  triggerAutoSave();
+}
+
+function removeBeruf(index) {
+  berufserfahrungData.splice(index, 1);
+  renderBerufserfahrung();
+  triggerAutoSave();
+}
+
+function renderAusbildung() {
+  var container = document.getElementById('ausbildung-list');
+  if (!container) return;
+  container.innerHTML = '';
+  for (var i = 0; i < ausbildungData.length; i++) {
+    var item = ausbildungData[i];
+    var div = document.createElement('div');
+    div.className = 'list-item';
+    div.innerHTML =
+      '<div class="list-row">' +
+        '<input type="text" value="' + esc(item.von) + '" placeholder="Von (Jahr)" oninput="ausbildungData[' + i + '].von=this.value;triggerAutoSave()">' +
+        '<input type="text" value="' + esc(item.bis) + '" placeholder="Bis (Jahr)" oninput="ausbildungData[' + i + '].bis=this.value;triggerAutoSave()">' +
+      '</div>' +
+      '<input type="text" value="' + esc(item.schule) + '" placeholder="Schule / Institution" oninput="ausbildungData[' + i + '].schule=this.value;triggerAutoSave()">' +
+      '<input type="text" value="' + esc(item.abschluss) + '" placeholder="Abschluss" oninput="ausbildungData[' + i + '].abschluss=this.value;triggerAutoSave()">' +
+      '<button type="button" class="delete-btn" onclick="removeAusbildung(' + i + ')">Entfernen</button>';
+    container.appendChild(div);
+  }
+}
+
+function addAusbildung() {
+  ausbildungData.push({von: '', bis: '', schule: '', abschluss: ''});
+  renderAusbildung();
+  triggerAutoSave();
+}
+
+function removeAusbildung(index) {
+  ausbildungData.splice(index, 1);
+  renderAusbildung();
+  triggerAutoSave();
+}
+
+function renderSprachen() {
+  var container = document.getElementById('sprachen-list');
+  if (!container) return;
+  container.innerHTML = '';
+  for (var i = 0; i < sprachenData.length; i++) {
+    var item = sprachenData[i];
+    var div = document.createElement('div');
+    div.className = 'list-item';
+    div.innerHTML =
+      '<div class="list-row">' +
+        '<input type="text" value="' + esc(item.sprache) + '" placeholder="Sprache" oninput="sprachenData[' + i + '].sprache=this.value;triggerAutoSave()">' +
+        '<select oninput="sprachenData[' + i + '].niveau=this.value;triggerAutoSave()">' +
+          '<option value="">Niveau wählen</option>' +
+          '<option value="Muttersprache"' + (item.niveau === 'Muttersprache' ? ' selected' : '') + '>Muttersprache</option>' +
+          '<option value="C2"' + (item.niveau === 'C2' ? ' selected' : '') + '>C2</option>' +
+          '<option value="C1"' + (item.niveau === 'C1' ? ' selected' : '') + '>C1</option>' +
+          '<option value="B2"' + (item.niveau === 'B2' ? ' selected' : '') + '>B2</option>' +
+          '<option value="B1"' + (item.niveau === 'B1' ? ' selected' : '') + '>B1</option>' +
+          '<option value="A2"' + (item.niveau === 'A2' ? ' selected' : '') + '>A2</option>' +
+          '<option value="A1"' + (item.niveau === 'A1' ? ' selected' : '') + '>A1</option>' +
+        '</select>' +
+      '</div>' +
+      '<button type="button" class="delete-btn" onclick="removeSprache(' + i + ')">Entfernen</button>';
+    container.appendChild(div);
+  }
+}
+
+function addSprache() {
+  sprachenData.push({sprache: '', niveau: ''});
+  renderSprachen();
+  triggerAutoSave();
+}
+
+function removeSprache(index) {
+  sprachenData.splice(index, 1);
+  renderSprachen();
+  triggerAutoSave();
+}
+
+function renderElektro() {
+  var container = document.getElementById('elektro-list');
+  if (!container) return;
+  container.innerHTML = '';
+  for (var i = 0; i < elektroData.length; i++) {
+    var div = document.createElement('div');
+    div.className = 'list-item';
+    div.style.flexDirection = 'row';
+    div.style.alignItems = 'center';
+    div.innerHTML = '<div style="flex:1">' + esc(elektroData[i]) + '</div><button type="button" class="delete-btn" onclick="removeFromList(' + i + ',\'elektro\')">X</button>';
+    container.appendChild(div);
+  }
+}
+
+function renderHausmeister() {
+  var container = document.getElementById('hausmeister-list');
+  if (!container) return;
+  container.innerHTML = '';
+  for (var i = 0; i < hausmeisterData.length; i++) {
+    var div = document.createElement('div');
+    div.className = 'list-item';
+    div.style.flexDirection = 'row';
+    div.style.alignItems = 'center';
+    div.innerHTML = '<div style="flex:1">' + esc(hausmeisterData[i]) + '</div><button type="button" class="delete-btn" onclick="removeFromList(' + i + ',\'hausmeister\')">X</button>';
+    container.appendChild(div);
+  }
+}
+
+function addToList(listType) {
+  var input = document.getElementById(listType + '-input');
+  if (!input || !input.value.trim()) return;
+  if (listType === 'elektro') { elektroData.push(input.value.trim()); renderElektro(); }
+  else if (listType === 'hausmeister') { hausmeisterData.push(input.value.trim()); renderHausmeister(); }
+  input.value = '';
+  triggerAutoSave();
+}
+
+function removeFromList(index, listType) {
+  if (listType === 'elektro') { elektroData.splice(index, 1); renderElektro(); }
+  else if (listType === 'hausmeister') { hausmeisterData.splice(index, 1); renderHausmeister(); }
+  triggerAutoSave();
+}
+
+function esc(str) {
+  return String(str || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// ===== KPI CALCULATION =====
+function getStunden() {
+  var arr = [];
+  for (var i = 1; i <= 12; i++) {
+    arr.push(parseFloat(document.getElementById('fin_stunden_m' + i).value) || 0);
+  }
+  return arr;
+}
+
+function getVal(id) { return parseFloat(document.getElementById(id).value) || 0; }
+
+function calcMonthlyRevenue() {
+  var stunden = getStunden();
+  var arbeitstage = getVal('fin_arbeitstage');
+  var anteil_e = getVal('fin_anteil_elektro') / 100;
+  var anteil_h = getVal('fin_anteil_hausmeister') / 100;
+  var satz_e = getVal('fin_stundensatz_elektro');
+  var satz_h = getVal('fin_stundensatz_hausmeister');
+  var mat = getVal('fin_materialkostenpauschale') / 100;
+  var rev = [];
+  for (var i = 0; i < 12; i++) {
+    var totalH = stunden[i] * arbeitstage;
+    var brutto = totalH * anteil_e * satz_e + totalH * anteil_h * satz_h;
+    rev.push(Math.round(brutto * (1 - mat)));
+  }
+  return rev;
+}
+
+function calcBetriebskosten() {
+  return getVal('kosten_miete') + getVal('kosten_fahrzeug') + getVal('kosten_versicherungen') +
+         getVal('kosten_werkzeug_abschreibung') + getVal('kosten_telefon') + getVal('kosten_buchhaltung') +
+         getVal('kosten_marketing') + getVal('kosten_verbrauchsmaterial') +
+         getVal('kosten_kfz_versicherung_steuer') + getVal('kosten_sonstige');
+}
+
+function calcPrivatkosten() {
+  return getVal('kosten_krankenversicherung') + getVal('kosten_rentenversicherung') + getVal('kosten_lebenshaltung');
+}
+
+function calcInvestitionen() {
+  return getVal('inv_werkzeug') + getVal('inv_transporter') + getVal('inv_marketing') +
+         getVal('inv_arbeitskleidung') + getVal('inv_laptop') + getVal('inv_reserve');
+}
+
+function calcGZ() {
+  var alg1 = getVal('gz_alg1_tagessatz');
+  var pauschale = getVal('gz_pauschale');
+  var dauer1 = getVal('gz_dauer_phase1');
+  var dauer2 = getVal('gz_dauer_phase2');
+  var arr = [];
+  for (var i = 0; i < 12; i++) {
+    if (i < dauer1) arr.push(Math.round(alg1 * 30 + pauschale));
+    else if (i < dauer1 + dauer2) arr.push(Math.round(pauschale));
+    else arr.push(0);
+  }
+  return arr;
+}
+
+function calcPreview() {
+  var rev = calcMonthlyRevenue();
+  var bk = calcBetriebskosten();
+  var inv = calcInvestitionen();
+  var gz = calcGZ();
+  var gewinn_m12 = rev[11] + gz[11] - bk - calcPrivatkosten();
+
+  document.getElementById('kpi-umsatz-m1').textContent = rev[0];
+  document.getElementById('kpi-umsatz-m12').textContent = rev[11];
+  document.getElementById('kpi-betriebskosten').textContent = Math.round(bk);
+  document.getElementById('kpi-investitionen').textContent = Math.round(inv);
+  document.getElementById('kpi-gz').textContent = gz[0];
+  document.getElementById('kpi-gewinn-m12').textContent = Math.round(gewinn_m12);
+  var wrap = document.getElementById('kpi-gewinn-m12-wrap');
+  if (wrap) wrap.style.color = gewinn_m12 >= 0 ? '#27ae60' : '#e74c3c';
+}
+
+// ===== AUTOSAVE =====
+var autoSaveTimer = null;
+function triggerAutoSave() {
+  if (autoSaveTimer) clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(doAutoSave, 500);
+}
+
+function doAutoSave() {
+  try {
+    var data = collectAllData();
+    localStorage.setItem('ms_businessplan_data', JSON.stringify(data));
+    var ind = document.getElementById('save-indicator');
+    if (ind) {
+      ind.style.display = 'block';
+      ind.style.animation = 'none';
+      void ind.offsetHeight;
+      ind.style.animation = 'fadeInOut 1.5s ease forwards';
+    }
+  } catch(e) { /* localStorage might be full or unavailable */ }
+}
+
+function autoRestore() {
+  try {
+    var saved = localStorage.getItem('ms_businessplan_data');
+    if (!saved) return;
+    var data = JSON.parse(saved);
+    restoreAllData(data);
+    showToast('Gespeicherte Daten wiederhergestellt', 'success');
+  } catch(e) { /* ignore parse errors */ }
+}
+
+// ===== DATA COLLECT / RESTORE =====
+function collectAllData() {
+  var stunden = [];
+  for (var i = 1; i <= 12; i++) stunden.push(getVal('fin_stunden_m' + i));
+
+  return {
+    firma: {
+      name: document.getElementById('firma_name').value,
+      inhaber: document.getElementById('firma_inhaber').value,
+      standort: document.getElementById('firma_standort').value,
+      bundesland: document.getElementById('firma_bundesland').value,
+      kreis: document.getElementById('firma_kreis').value,
+      rechtsform: document.getElementById('firma_rechtsform').value,
+      gruendung: document.getElementById('firma_gruendung').value,
+      meisterbetrieb: document.getElementById('firma_meisterbetrieb').value,
+      telefon: document.getElementById('firma_telefon').value,
+      email: document.getElementById('firma_email').value
+    },
+    gruender: {
+      geburtsdatum: document.getElementById('gruender_geburtsdatum').value,
+      geburtsort: document.getElementById('gruender_geburtsort').value,
+      staatsangehoerigkeit: document.getElementById('gruender_staatsangehoerigkeit').value,
+      familienstand: document.getElementById('gruender_familienstand').value,
+      ausbildung: document.getElementById('gruender_ausbildung').value,
+      berufserfahrung: document.getElementById('gruender_berufserfahrung').value,
+      letzte_anstellung: document.getElementById('gruender_letzte_anstellung').value,
+      position: document.getElementById('gruender_position').value,
+      dauer: document.getElementById('gruender_dauer').value
+    },
+    finanzen: {
+      stundensatz_elektro: document.getElementById('fin_stundensatz_elektro').value,
+      stundensatz_hausmeister: document.getElementById('fin_stundensatz_hausmeister').value,
+      arbeitstage: document.getElementById('fin_arbeitstage').value,
+      materialkostenpauschale: document.getElementById('fin_materialkostenpauschale').value,
+      anteil_elektro: document.getElementById('fin_anteil_elektro').value,
+      anteil_hausmeister: document.getElementById('fin_anteil_hausmeister').value,
+      eigenkapital: document.getElementById('fin_eigenkapital').value,
+      stunden: stunden
+    },
+    kosten_betrieblich: {
+      miete: document.getElementById('kosten_miete').value,
+      fahrzeug: document.getElementById('kosten_fahrzeug').value,
+      versicherungen: document.getElementById('kosten_versicherungen').value,
+      werkzeug_abschreibung: document.getElementById('kosten_werkzeug_abschreibung').value,
+      telefon: document.getElementById('kosten_telefon').value,
+      buchhaltung: document.getElementById('kosten_buchhaltung').value,
+      marketing: document.getElementById('kosten_marketing').value,
+      verbrauchsmaterial: document.getElementById('kosten_verbrauchsmaterial').value,
+      kfz_versicherung_steuer: document.getElementById('kosten_kfz_versicherung_steuer').value,
+      sonstige: document.getElementById('kosten_sonstige').value
+    },
+    kosten_privat: {
+      krankenversicherung: document.getElementById('kosten_krankenversicherung').value,
+      rentenversicherung: document.getElementById('kosten_rentenversicherung').value,
+      lebenshaltung: document.getElementById('kosten_lebenshaltung').value
+    },
+    investitionen: {
+      werkzeug: document.getElementById('inv_werkzeug').value,
+      transporter: document.getElementById('inv_transporter').value,
+      marketing: document.getElementById('inv_marketing').value,
+      arbeitskleidung: document.getElementById('inv_arbeitskleidung').value,
+      laptop: document.getElementById('inv_laptop').value,
+      reserve: document.getElementById('inv_reserve').value
+    },
+    gruendungszuschuss: {
+      alg1_tagessatz: document.getElementById('gz_alg1_tagessatz').value,
+      pauschale: document.getElementById('gz_pauschale').value,
+      dauer_phase1: document.getElementById('gz_dauer_phase1').value,
+      dauer_phase2: document.getElementById('gz_dauer_phase2').value
+    },
+    fuehrerschein: document.getElementById('fuehrerschein').value,
+    berufserfahrung: berufserfahrungData,
+    ausbildung: ausbildungData,
+    sprachen: sprachenData,
+    elektro: elektroData,
+    hausmeister: hausmeisterData
+  };
+}
+
+function restoreAllData(data) {
+  function setVal(id, val) {
+    var el = document.getElementById(id);
+    if (el && val !== undefined && val !== null) el.value = val;
+  }
+
+  if (data.firma) {
+    setVal('firma_name', data.firma.name);
+    setVal('firma_inhaber', data.firma.inhaber);
+    setVal('firma_standort', data.firma.standort);
+    setVal('firma_bundesland', data.firma.bundesland);
+    setVal('firma_kreis', data.firma.kreis);
+    setVal('firma_rechtsform', data.firma.rechtsform);
+    setVal('firma_gruendung', data.firma.gruendung);
+    setVal('firma_meisterbetrieb', data.firma.meisterbetrieb);
+    setVal('firma_telefon', data.firma.telefon);
+    setVal('firma_email', data.firma.email);
+  }
+  if (data.gruender) {
+    setVal('gruender_geburtsdatum', data.gruender.geburtsdatum);
+    setVal('gruender_geburtsort', data.gruender.geburtsort);
+    setVal('gruender_staatsangehoerigkeit', data.gruender.staatsangehoerigkeit);
+    setVal('gruender_familienstand', data.gruender.familienstand);
+    setVal('gruender_ausbildung', data.gruender.ausbildung);
+    setVal('gruender_berufserfahrung', data.gruender.berufserfahrung);
+    setVal('gruender_letzte_anstellung', data.gruender.letzte_anstellung);
+    setVal('gruender_position', data.gruender.position);
+    setVal('gruender_dauer', data.gruender.dauer);
+  }
+  if (data.finanzen) {
+    setVal('fin_stundensatz_elektro', data.finanzen.stundensatz_elektro);
+    setVal('fin_stundensatz_hausmeister', data.finanzen.stundensatz_hausmeister);
+    setVal('fin_arbeitstage', data.finanzen.arbeitstage);
+    setVal('fin_materialkostenpauschale', data.finanzen.materialkostenpauschale);
+    setVal('fin_anteil_elektro', data.finanzen.anteil_elektro);
+    setVal('fin_anteil_hausmeister', data.finanzen.anteil_hausmeister);
+    setVal('fin_eigenkapital', data.finanzen.eigenkapital);
+    if (data.finanzen.stunden) {
+      for (var i = 0; i < 12; i++) setVal('fin_stunden_m' + (i + 1), data.finanzen.stunden[i]);
+    }
+  }
+  if (data.kosten_betrieblich) {
+    setVal('kosten_miete', data.kosten_betrieblich.miete);
+    setVal('kosten_fahrzeug', data.kosten_betrieblich.fahrzeug);
+    setVal('kosten_versicherungen', data.kosten_betrieblich.versicherungen);
+    setVal('kosten_werkzeug_abschreibung', data.kosten_betrieblich.werkzeug_abschreibung);
+    setVal('kosten_telefon', data.kosten_betrieblich.telefon);
+    setVal('kosten_buchhaltung', data.kosten_betrieblich.buchhaltung);
+    setVal('kosten_marketing', data.kosten_betrieblich.marketing);
+    setVal('kosten_verbrauchsmaterial', data.kosten_betrieblich.verbrauchsmaterial);
+    setVal('kosten_kfz_versicherung_steuer', data.kosten_betrieblich.kfz_versicherung_steuer);
+    setVal('kosten_sonstige', data.kosten_betrieblich.sonstige);
+  }
+  if (data.kosten_privat) {
+    setVal('kosten_krankenversicherung', data.kosten_privat.krankenversicherung);
+    setVal('kosten_rentenversicherung', data.kosten_privat.rentenversicherung);
+    setVal('kosten_lebenshaltung', data.kosten_privat.lebenshaltung);
+  }
+  if (data.investitionen) {
+    setVal('inv_werkzeug', data.investitionen.werkzeug);
+    setVal('inv_transporter', data.investitionen.transporter);
+    setVal('inv_marketing', data.investitionen.marketing);
+    setVal('inv_arbeitskleidung', data.investitionen.arbeitskleidung);
+    setVal('inv_laptop', data.investitionen.laptop);
+    setVal('inv_reserve', data.investitionen.reserve);
+  }
+  if (data.gruendungszuschuss) {
+    setVal('gz_alg1_tagessatz', data.gruendungszuschuss.alg1_tagessatz);
+    setVal('gz_pauschale', data.gruendungszuschuss.pauschale);
+    setVal('gz_dauer_phase1', data.gruendungszuschuss.dauer_phase1);
+    setVal('gz_dauer_phase2', data.gruendungszuschuss.dauer_phase2);
+  }
+  if (data.fuehrerschein) setVal('fuehrerschein', data.fuehrerschein);
+  if (data.berufserfahrung) berufserfahrungData = data.berufserfahrung;
+  if (data.ausbildung) ausbildungData = data.ausbildung;
+  if (data.sprachen) sprachenData = data.sprachen;
+  if (data.elektro) elektroData = data.elektro;
+  if (data.hausmeister) hausmeisterData = data.hausmeister;
+  initLists();
+}
+
+// ===== SAVE / LOAD JSON =====
+function saveData() {
+  var data = collectAllData();
+  var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  saveAs(blob, 'Businessplan_Daten.json');
+  showToast('Daten als JSON gespeichert', 'success');
+}
+
+function loadData(event) {
+  var file = event.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var data = JSON.parse(e.target.result);
+      restoreAllData(data);
+      calcPreview();
+      showToast('Daten erfolgreich geladen!', 'success');
+    } catch(err) {
+      showToast('Fehler beim Laden: ' + err.message, 'error');
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ===== LOADING STATES =====
+function setLoading(btnId, loading) {
+  var btn = document.getElementById(btnId);
+  if (!btn) return;
+  if (loading) {
+    btn.dataset.origText = btn.textContent;
+    btn.textContent = 'Wird erstellt...';
+    btn.classList.add('loading');
+  } else {
+    btn.textContent = btn.dataset.origText || btn.textContent;
+    btn.classList.remove('loading');
+  }
+}
+
+function startGen(type) {
+  if (type === 'bp') {
+    setLoading('btn-gen-bp', true);
+    setTimeout(function() { genBusinessplanPDF(); setLoading('btn-gen-bp', false); }, 50);
+  } else if (type === 'excel') {
+    setLoading('btn-gen-excel', true);
+    setTimeout(function() { genFinanzplanExcel(); }, 50);
+  } else if (type === 'cv') {
+    setLoading('btn-gen-cv', true);
+    setTimeout(function() { genLebenslaufPDF(); setLoading('btn-gen-cv', false); }, 50);
+  } else if (type === 'all') {
+    setLoading('btn-gen-all', true);
+    setTimeout(function() {
+      genBusinessplanPDF();
+      setTimeout(function() {
+        genFinanzplanExcel();
+        setTimeout(function() {
+          genLebenslaufPDF();
+          setLoading('btn-gen-all', false);
+          showToast('Alle Dokumente erstellt!', 'success');
+        }, 500);
+      }, 500);
+    }, 50);
+  }
+}
+
+// ===== MONTH LABELS =====
+function getMonthLabels() {
+  var gruendung = document.getElementById('firma_gruendung').value || '2026-07-01';
+  var d = new Date(gruendung);
+  var labels = [];
+  var monthNames = ['Jan','Feb','Mrz','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+  for (var i = 0; i < 12; i++) {
+    var m = new Date(d.getFullYear(), d.getMonth() + i, 1);
+    labels.push(monthNames[m.getMonth()] + ' ' + String(m.getFullYear()).slice(2));
+  }
+  return labels;
+}
+
+// ===== BUSINESSPLAN PDF =====
+function genBusinessplanPDF() {
+  try {
+    var jsPDF = (window.jspdf && window.jspdf.jsPDF) || (window.jsPDF && window.jsPDF.jsPDF);
+    var doc = new jsPDF('p', 'mm', 'a4');
+    var W = 210, H = 297, M = 15;
+    var CW = W - 2 * M;
+    var monthLabels = getMonthLabels();
+    var rev = calcMonthlyRevenue();
+    var bk = calcBetriebskosten();
+    var pk = calcPrivatkosten();
+    var inv = calcInvestitionen();
+    var gz = calcGZ();
+    var stunden = getStunden();
+
+    var firma = document.getElementById('firma_name').value || 'M&S';
+    var inhaber = document.getElementById('firma_inhaber').value || '';
+    var standort = document.getElementById('firma_standort').value || '';
+    var bundesland = document.getElementById('firma_bundesland').value || '';
+    var kreis = document.getElementById('firma_kreis').value || '';
+    var rechtsform = document.getElementById('firma_rechtsform').value || '';
+    var gruendung = document.getElementById('firma_gruendung').value || '';
+    var meister = document.getElementById('firma_meisterbetrieb').value || '[Meisterbetrieb eintragen]';
+    var telefon = document.getElementById('firma_telefon').value || '';
+    var email = document.getElementById('firma_email').value || '';
+    var geburt = document.getElementById('gruender_geburtsdatum').value || '';
+    var geburtsort = document.getElementById('gruender_geburtsort').value || '';
+    var staat = document.getElementById('gruender_staatsangehoerigkeit').value || '';
+    var familienstand = document.getElementById('gruender_familienstand').value || '';
+    var ausbildung = document.getElementById('gruender_ausbildung').value || '';
+    var berufsj = document.getElementById('gruender_berufserfahrung').value || '';
+    var letzte = document.getElementById('gruender_letzte_anstellung').value || '';
+    var position = document.getElementById('gruender_position').value || '';
+    var dauer = document.getElementById('gruender_dauer').value || '';
+    var eigenkapital = getVal('fin_eigenkapital');
+    var arbeitstage = getVal('fin_arbeitstage');
+
+    function euro(n) { return n.toLocaleString('de-DE') + ' \u20AC'; }
+    function addChapter(num, title) {
+      doc.addPage();
+      doc.setFontSize(18);
+      doc.setTextColor(27, 79, 114);
+      doc.text(num + '. ' + title, M, 20);
+      doc.setDrawColor(46, 134, 193);
+      doc.setLineWidth(0.5);
+      doc.line(M, 24, W - M, 24);
+      doc.setTextColor(44, 62, 80);
+      doc.setFontSize(11);
+      return 32;
+    }
+    function addPara(text, y) {
+      var lines = doc.splitTextToSize(text, CW);
+      if (y + lines.length * 5 > H - 20) { doc.addPage(); y = 20; }
+      doc.text(lines, M, y);
+      return y + lines.length * 5 + 4;
+    }
+    function addH2(text, y) {
+      if (y > H - 30) { doc.addPage(); y = 20; }
+      doc.setFontSize(13);
+      doc.setTextColor(46, 134, 193);
+      doc.text(text, M, y);
+      doc.setFontSize(11);
+      doc.setTextColor(44, 62, 80);
+      return y + 8;
+    }
+
+    // === DECKBLATT ===
+    doc.setFontSize(36);
+    doc.setTextColor(27, 79, 114);
+    doc.text('BUSINESSPLAN', 105, 80, { align: 'center' });
+    doc.setDrawColor(27, 79, 114);
+    doc.setLineWidth(1);
+    doc.line(40, 86, 170, 86);
+    doc.setFontSize(24);
+    doc.setTextColor(46, 134, 193);
+    doc.text('M&S', 105, 102, { align: 'center' });
+    doc.setFontSize(14);
+    doc.text('Elektro- und Hausmeisterservice', 105, 112, { align: 'center' });
+    doc.setFontSize(11);
+    doc.setTextColor(44, 62, 80);
+    doc.text('Zur Vorlage bei der Bundesagentur fuer Arbeit', 105, 135, { align: 'center' });
+    doc.text('im Rahmen des Antrags auf Gruendungszuschuss', 105, 142, { align: 'center' });
+
+    doc.setFontSize(11);
+    var cy = 170;
+    var deckInfo = [['Gruender:', inhaber], ['Unternehmen:', firma], ['Standort:', standort], ['Datum:', new Date().toLocaleDateString('de-DE')]];
+    for (var di = 0; di < deckInfo.length; di++) {
+      doc.setFont('helvetica', 'bold');
+      doc.text(deckInfo[di][0], 65, cy);
+      doc.setFont('helvetica', 'normal');
+      doc.text(deckInfo[di][1], 105, cy);
+      cy += 7;
+    }
+
+    // === INHALTSVERZEICHNIS ===
+    doc.addPage();
+    doc.setFontSize(20);
+    doc.setTextColor(27, 79, 114);
+    doc.text('Inhaltsverzeichnis', M, 25);
+    doc.setDrawColor(46, 134, 193);
+    doc.line(M, 30, W - M, 30);
+    doc.setFontSize(12);
+    doc.setTextColor(44, 62, 80);
+    var toc = ['Zusammenfassung des Vorhabens', 'Gruenderprofil', 'Geschaeftsidee und Leistungsangebot',
+               'Markt- und Wettbewerbsanalyse', 'Marketing und Vertrieb', 'Organisation und Rechtsform',
+               'Finanzplanung', 'SWOT-Analyse', 'Meilensteine und Zeitplan'];
+    var tocY = 42;
+    for (var ti = 0; ti < toc.length; ti++) {
+      doc.text((ti + 1) + '.  ' + toc[ti], M, tocY);
+      tocY += 9;
+    }
+
+    // === 1. ZUSAMMENFASSUNG ===
+    var y = addChapter(1, 'Zusammenfassung des Vorhabens');
+    y = addPara(inhaber + ', ' + (geburt ? Math.floor((new Date() - new Date(geburt)) / 31536000000) + ' Jahre' : '') + ', betreibt seit mehreren Monaten ein angemeldetes Gewerbe unter dem Namen ' + firma + ' im Bereich Elektroarbeiten und Hausmeisterservice. Aufgrund der stetig wachsenden Nachfrage und eines bereits bestehenden Kundenstamms plant er die Umstellung von der nebenberuflichen auf eine hauptberufliche selbstaendige Taetigkeit.', y);
+    y = addPara('Das Leistungsangebot umfasst vorbereitende Elektroarbeiten (insbesondere Kabelverlegung fuer Strom- und Netzwerkinstallationen), Hausmeisterservice sowie allgemeine Handwerks- und Montagearbeiten. Fuer sicherheitsrelevante Anschlussarbeiten besteht eine Kooperation mit dem eingetragenen Meisterbetrieb ' + meister + '.', y);
+    y = addPara('Der Standort ' + standort + ' und das Taetigkeitsgebiet im wirtschaftsstarken Rhein-Main-Gebiet bieten optimale Voraussetzungen: Die Nachfrage nach zuverlaessigen Handwerkern uebersteigt seit Jahren das Angebot. Fachkraeftemangel, Neubautaetigkeit und Sanierungsbedarf sorgen fuer eine stabile Auftragslage.', y);
+    y = addPara('Der Gruendungszuschuss der Bundesagentur fuer Arbeit wird zur Sicherung des Lebensunterhalts in der Aufbauphase beantragt. Die wirtschaftliche Tragfaehigkeit des Vorhabens ist durch die bereits nachweisbare Kundennachfrage, die geringe Kostenstruktur und die strategische Kooperation mit einem Meisterbetrieb gegeben.', y);
+
+    // === 2. GRUENDERPROFIL ===
+    y = addChapter(2, 'Gruenderprofil');
+    if (doc.autoTable) {
+      doc.autoTable({
+        startY: y,
+        head: [['Merkmal', 'Details']],
+        body: [
+          ['Name', inhaber],
+          ['Geburtsdatum', geburt],
+          ['Geburtsort', geburtsort],
+          ['Staatsangehoerigkeit', staat],
+          ['Familienstand', familienstand],
+          ['Gewerbestandort', standort + ', ' + bundesland],
+          ['Rechtsform', rechtsform],
+          ['Ausbildung', ausbildung],
+          ['Berufserfahrung', berufsj + ' Jahre'],
+          ['Letzte Anstellung', letzte + ' (' + position + ', ' + dauer + ')'],
+        ],
+        margin: { left: M, right: M },
+        styles: { fontSize: 10, font: 'helvetica' },
+        headStyles: { fillColor: [27, 79, 114] }
+      });
+      y = doc.lastAutoTable.finalY + 8;
+    }
+    y = addH2('Berufliche Qualifikation', y);
+    y = addPara(inhaber + ' verfuegt ueber eine im Ausland absolvierte elektrotechnische Ausbildung sowie mehrjaehrige praktische Berufserfahrung sowohl im angestellten Verhaeltnis als auch in der selbstaendigen Taetigkeit. Vor der Selbstaendigkeit war er ueber ' + dauer + ' als ' + position + ' bei der ' + letzte + ' festangestellt.', y);
+    y = addPara('Parallel und im Anschluss an diese Taetigkeit hat er praktische Erfahrung in der Kabelverlegung, Baustellenarbeit und im Hausmeisterservice gesammelt. Er zeichnet sich durch hohe Flexibilitaet, Zuverlaessigkeit und handwerkliches Geschick aus.', y);
+
+    // === 3. GESCHAEFTSIDEE ===
+    y = addChapter(3, 'Geschaeftsidee und Leistungsangebot');
+    y = addH2('Ausgangssituation', y);
+    y = addPara('Das Gewerbe ' + firma + ' ist bereits angemeldet und aktiv. Aufgrund der stark wachsenden Nachfrage - zahlreiche Kunden melden sich durch Weiterempfehlungen - soll die Taetigkeit vom Nebenerwerb in den Haupterwerb ueberfuehrt werden.', y);
+    y = addH2('Bereich 1: Elektroarbeiten', y);
+    for (var ei = 0; ei < elektroData.length; ei++) {
+      y = addPara('\u2022  ' + elektroData[ei], y);
+    }
+    y = addH2('Bereich 2: Hausmeisterservice', y);
+    for (var hi = 0; hi < hausmeisterData.length; hi++) {
+      y = addPara('\u2022  ' + hausmeisterData[hi], y);
+    }
+    y = addH2('Kooperation mit Meisterbetrieb', y);
+    y = addPara('Fuer alle sicherheitsrelevanten Elektroarbeiten, die gemaess der Handwerksordnung (Anlage A, Nr. 25) einen Meisterbrief erfordern, arbeitet ' + firma + ' mit dem Meisterbetrieb ' + meister + ' zusammen.', y);
+
+    // === 4. MARKT & WETTBEWERB ===
+    y = addChapter(4, 'Markt- und Wettbewerbsanalyse');
+    y = addH2('Marktsituation', y);
+    y = addPara('Das Rhein-Main-Gebiet gehoert zu den wirtschaftlich staerksten Regionen Deutschlands. Die Baubranche boomt seit Jahren, getrieben durch Neubauprojekte, energetische Sanierungen und Modernisierungen. Gleichzeitig herrscht im Handwerk ein akuter Fachkraeftemangel.', y);
+    y = addH2('Branchentrends', y);
+    var trends = ['Steigende Bautaetigkeit im Grossraum Frankfurt und Wiesbaden',
+                  'Energetische Sanierungspflichten erhoehen Nachfrage nach Elektroarbeiten',
+                  'Smart-Home-Trend erfordert zunehmend Netzwerkverkabelung',
+                  'Fachkraeftemangel im Handwerk auf Rekordniveau',
+                  'Waermepumpen und PV-Anlagen steigern Bedarf an Elektroinstallationen'];
+    for (var tr = 0; tr < trends.length; tr++) { y = addPara('\u2022  ' + trends[tr], y); }
+    y = addH2('Zielgruppen', y);
+    if (doc.autoTable) {
+      doc.autoTable({
+        startY: y,
+        head: [['Kundensegment', 'Beschreibung']],
+        body: [
+          ['Privatkunden', 'Hausbesitzer, Bauherren, Mieter mit Renovierungsbedarf'],
+          ['Bauunternehmen', 'Subunternehmer-Auftraege fuer Kabelverlegung auf Baustellen'],
+          ['Hausverwaltungen', 'Laufende Wartung, Reparaturen, Hausmeisterservice'],
+          ['Gewerbekunden', 'Bueros, Geschaefte, Gastronomie'],
+          ['Bautraeger', 'Groessere Projekte in Zusammenarbeit mit Meisterbetrieb'],
+        ],
+        margin: { left: M, right: M },
+        styles: { fontSize: 10 },
+        headStyles: { fillColor: [27, 79, 114] }
+      });
+      y = doc.lastAutoTable.finalY + 8;
+    }
+    y = addH2('Wettbewerbsvorteile', y);
+    var vorteile = ['Hohe Flexibilitaet: Kurzfristige Terminvergabe, auch am Wochenende',
+                    'Bereits nachweisbarer Kundenstamm durch Weiterempfehlungen',
+                    'Breites Leistungsspektrum: Elektro + Hausmeister aus einer Hand',
+                    'Persoenlicher, direkter Kundenkontakt',
+                    'Geringe Gemeinkosten durch schlanke Unternehmensstruktur',
+                    'Professionelle Kooperation mit Meisterbetrieb'];
+    for (var vi = 0; vi < vorteile.length; vi++) { y = addPara('\u2022  ' + vorteile[vi], y); }
+
+    // === 5. MARKETING ===
+    y = addChapter(5, 'Marketing und Vertrieb');
+    y = addH2('Bisherige Kundengewinnung', y);
+    y = addPara('Die bisherige Kundengewinnung erfolgt erfolgreich ueber organische Kanaele. Die Telefonnummer wird aktiv weiterempfohlen, sodass regelmaessig neue Anfragen eingehen.', y);
+    y = addH2('Geplante Marketingmassnahmen', y);
+    if (doc.autoTable) {
+      doc.autoTable({
+        startY: y,
+        head: [['Massnahme', 'Beschreibung', 'Zeitrahmen']],
+        body: [
+          ['Google Unternehmensprofil', 'Kostenlose lokale Sichtbarkeit', 'Monat 1'],
+          ['Professionelle Website', 'Leistungen, Referenzen, Kontakt', 'Monat 1-2'],
+          ['Instagram-Profil', 'Vorher/Nachher-Bilder, Updates', 'Monat 1'],
+          ['Google Ads', 'Regionale Werbung', 'Ab Monat 3'],
+          ['Fahrzeugbeschriftung', 'Mobile Werbung', 'Nach Fahrzeugkauf'],
+          ['Flyer & Visitenkarten', 'Lokale Verteilung', 'Laufend'],
+          ['Bewertungsmanagement', 'Google-Bewertungen', 'Laufend'],
+        ],
+        margin: { left: M, right: M },
+        styles: { fontSize: 10 },
+        headStyles: { fillColor: [27, 79, 114] }
+      });
+      y = doc.lastAutoTable.finalY + 8;
+    }
+
+    // === 6. ORGANISATION ===
+    y = addChapter(6, 'Organisation und Rechtsform');
+    y = addPara('Rechtsform: ' + rechtsform + '. Das Unternehmen wird als ' + rechtsform + ' gefuehrt. ' + inhaber + ' ist alleiniger Inhaber und fuer alle operativen Taetigkeiten verantwortlich.', y);
+    y = addPara('Die kaufmaennische Verwaltung (Buchhaltung, Rechnungsstellung, Organisation) wird von der Partnerin des Gruenders uebernommen. Die Verwaltung erfolgt aus dem Homeoffice.', y);
+    if (doc.autoTable) {
+      doc.autoTable({
+        startY: y,
+        head: [['Bereich', 'Verantwortlich']],
+        body: [
+          ['Auftragsabwicklung & Ausfuehrung', inhaber],
+          ['Kundenakquise & Kommunikation', inhaber],
+          ['Buchhaltung & Rechnungen', 'Partnerin (Homeoffice)'],
+          ['Materialbeschaffung', inhaber],
+          ['Marketing & Online-Praesenz', 'Gemeinsam'],
+        ],
+        margin: { left: M, right: M },
+        styles: { fontSize: 10 },
+        headStyles: { fillColor: [27, 79, 114] }
+      });
+      y = doc.lastAutoTable.finalY + 8;
+    }
+
+    // === 7. FINANZPLANUNG ===
+    y = addChapter(7, 'Finanzplanung');
+
+    // Investitionen
+    y = addH2('Einmalige Investitionen', y);
+    if (doc.autoTable) {
+      doc.autoTable({
+        startY: y,
+        head: [['Position', 'Betrag']],
+        body: [
+          ['Werkzeug & Geraete', euro(getVal('inv_werkzeug'))],
+          ['Transporter Anzahlung', euro(getVal('inv_transporter'))],
+          ['Marketing Erstausstattung', euro(getVal('inv_marketing'))],
+          ['Arbeitskleidung & Schutz', euro(getVal('inv_arbeitskleidung'))],
+          ['Laptop & Software', euro(getVal('inv_laptop'))],
+          ['Reserve', euro(getVal('inv_reserve'))],
+          ['GESAMT', euro(inv)],
+        ],
+        margin: { left: M, right: M },
+        styles: { fontSize: 10 },
+        headStyles: { fillColor: [27, 79, 114] },
+        bodyStyles: { },
+        didParseCell: function(data) {
+          if (data.row.index === 6) { data.cell.styles.fontStyle = 'bold'; data.cell.styles.fillColor = [235, 245, 251]; }
+        }
+      });
+      y = doc.lastAutoTable.finalY + 8;
+    }
+
+    // Betriebskosten
+    y = addH2('Monatliche Betriebskosten', y);
+    if (doc.autoTable) {
+      doc.autoTable({
+        startY: y,
+        head: [['Position', 'Betrag/Monat']],
+        body: [
+          ['Miete / Buero', euro(getVal('kosten_miete'))],
+          ['Fahrzeugkosten', euro(getVal('kosten_fahrzeug'))],
+          ['Versicherungen Betrieb', euro(getVal('kosten_versicherungen'))],
+          ['Werkzeug-Abschreibung', euro(getVal('kosten_werkzeug_abschreibung'))],
+          ['Telefon & Internet', euro(getVal('kosten_telefon'))],
+          ['Buchhaltung & Steuerberater', euro(getVal('kosten_buchhaltung'))],
+          ['Marketing & Werbung', euro(getVal('kosten_marketing'))],
+          ['Verbrauchsmaterial', euro(getVal('kosten_verbrauchsmaterial'))],
+          ['KFZ-Versicherung & Steuer', euro(getVal('kosten_kfz_versicherung_steuer'))],
+          ['Sonstige', euro(getVal('kosten_sonstige'))],
+          ['GESAMT', euro(bk)],
+        ],
+        margin: { left: M, right: M },
+        styles: { fontSize: 10 },
+        headStyles: { fillColor: [27, 79, 114] },
+        didParseCell: function(data) {
+          if (data.row.index === 10) { data.cell.styles.fontStyle = 'bold'; data.cell.styles.fillColor = [235, 245, 251]; }
+        }
+      });
+      y = doc.lastAutoTable.finalY + 8;
+    }
+
+    // 12-Monats-Uebersicht
+    y = addH2('12-Monats-Umsatz- und Gewinnplanung', y);
+    var finBody = [];
+    var cumProfit = 0;
+    for (var fm = 0; fm < 12; fm++) {
+      var gzm = gz[fm];
+      var profit = rev[fm] + gzm - bk - pk;
+      cumProfit += profit;
+      finBody.push([monthLabels[fm], euro(rev[fm]), euro(Math.round(bk)), euro(Math.round(pk)), euro(gzm), euro(Math.round(profit)), euro(Math.round(cumProfit))]);
+    }
+    if (doc.autoTable) {
+      doc.autoTable({
+        startY: y,
+        head: [['Monat', 'Umsatz', 'Betr.Kosten', 'Privat', 'GZ', 'Ergebnis', 'Kumuliert']],
+        body: finBody,
+        margin: { left: M, right: M },
+        styles: { fontSize: 8, cellPadding: 2 },
+        headStyles: { fillColor: [27, 79, 114], fontSize: 8 },
+        didParseCell: function(data) {
+          if (data.section === 'body' && data.column.index >= 5) {
+            var val = parseInt(data.cell.raw);
+            if (val < 0) data.cell.styles.textColor = [231, 76, 60];
+            else data.cell.styles.textColor = [39, 174, 96];
+          }
+        }
+      });
+      y = doc.lastAutoTable.finalY + 8;
+    }
+
+    // Gruendungszuschuss
+    y = addH2('Gruendungszuschuss', y);
+    var gz_phase1_total = gz[0] * getVal('gz_dauer_phase1');
+    var gz_phase2_total = getVal('gz_pauschale') * getVal('gz_dauer_phase2');
+    y = addPara('Phase 1 (' + getVal('gz_dauer_phase1') + ' Monate): ' + euro(gz[0]) + '/Monat = ' + euro(gz_phase1_total) + ' gesamt', y);
+    y = addPara('Phase 2 (' + getVal('gz_dauer_phase2') + ' Monate): ' + euro(getVal('gz_pauschale')) + '/Monat = ' + euro(gz_phase2_total) + ' gesamt', y);
+    y = addPara('Gesamter Gruendungszuschuss: ' + euro(gz_phase1_total + gz_phase2_total), y);
+    y = addPara('Eigenkapital: ' + euro(eigenkapital), y);
+
+    // === 8. SWOT ===
+    y = addChapter(8, 'SWOT-Analyse');
+    if (doc.autoTable) {
+      doc.autoTable({
+        startY: y,
+        head: [['Staerken', 'Schwaechen'], ['Chancen', 'Risiken']],
+        body: [
+          [
+            '\u2022 Vorhandener Kundenstamm\n\u2022 Elektro + Hausmeister aus einer Hand\n\u2022 Niedrige Fixkosten\n\u2022 Flexibilitaet & schnelle Verfuegbarkeit\n\u2022 Kooperation mit Meisterbetrieb',
+            '\u2022 Kein eigener Meistertitel\n\u2022 Einpersonenunternehmen\n\u2022 Begrenzte Kapazitaet\n\u2022 Noch geringe Markenbekanntheit'
+          ],
+          [
+            '\u2022 Fachkraeftemangel im Handwerk\n\u2022 Wachsender Sanierungsbedarf\n\u2022 Smart-Home und E-Mobilitaet\n\u2022 Ausbau des Kundennetzes\n\u2022 Spezialisierung moeglich',
+            '\u2022 Konjunkturabhaengigkeit\n\u2022 Preisdruck durch Wettbewerb\n\u2022 Zahlungsausfaelle\n\u2022 Krankheitsausfall des Inhabers'
+          ]
+        ],
+        margin: { left: M, right: M },
+        styles: { fontSize: 9, cellPadding: 4 },
+        headStyles: { fillColor: [27, 79, 114] },
+        columnStyles: { 0: { cellWidth: CW / 2 }, 1: { cellWidth: CW / 2 } }
+      });
+      y = doc.lastAutoTable.finalY + 8;
+    }
+
+    // === 9. MEILENSTEINE ===
+    y = addChapter(9, 'Meilensteine und Zeitplan');
+    var meilensteine = [
+      ['Monat 1', 'Vollzeit-Start, Google-Profil, Instagram, Website-Start'],
+      ['Monat 2-3', 'Erste Google Ads, Fahrzeugbeschriftung, 3-5 regelmaessige Kunden'],
+      ['Monat 4-6', 'Break-even erreichen, 6+ Stunden/Tag fakturierbar'],
+      ['Monat 7-9', 'Kundenstamm gefestigt, erste Mitarbeiter-Ueberlegungen'],
+      ['Monat 10-12', 'Nachhaltiger Gewinn, Erweiterung des Leistungsportfolios'],
+    ];
+    if (doc.autoTable) {
+      doc.autoTable({
+        startY: y,
+        head: [['Zeitraum', 'Meilenstein']],
+        body: meilensteine,
+        margin: { left: M, right: M },
+        styles: { fontSize: 10 },
+        headStyles: { fillColor: [27, 79, 114] }
+      });
+    }
+
+    // === SEITENZAHLEN ===
+    var totalPages = doc.internal.getNumberOfPages();
+    for (var p = 2; p <= totalPages; p++) {
+      doc.setPage(p);
+      doc.setFontSize(8);
+      doc.setTextColor(150, 150, 150);
+      doc.text('Businessplan ' + firma + ' - Seite ' + p + ' von ' + totalPages, 105, H - 8, { align: 'center' });
+    }
+
+    doc.save('Businessplan_MS.pdf');
+    showToast('Businessplan PDF erstellt!', 'success');
+  } catch(e) {
+    showToast('PDF-Fehler: ' + e.message, 'error');
+    console.error(e);
+  }
+}
+
+// ===== FINANZPLAN EXCEL =====
+function genFinanzplanExcel() {
+  try {
+    var ExcelJS = window.ExcelJS;
+    var wb = new ExcelJS.Workbook();
+    var monthLabels = getMonthLabels();
+    var rev = calcMonthlyRevenue();
+    var bk = calcBetriebskosten();
+    var pk = calcPrivatkosten();
+    var invTotal = calcInvestitionen();
+    var gz = calcGZ();
+    var stunden = getStunden();
+    var arbeitstage = getVal('fin_arbeitstage');
+
+    var headerFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1B4F72' } };
+    var headerFont = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
+    var boldFont = { bold: true, size: 11 };
+    var sumFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEBF5FB' } };
+    var euroFmt = '#,##0 \u20AC';
+
+    function styleHeader(ws, cols) {
+      var row = ws.getRow(1);
+      row.font = headerFont;
+      row.fill = headerFill;
+      row.alignment = { horizontal: 'center' };
+      for (var c = 1; c <= cols; c++) {
+        row.getCell(c).border = { bottom: { style: 'medium', color: { argb: 'FF1B4F72' } } };
+      }
+    }
+
+    // --- Sheet 1: Umsatzplanung ---
+    var ws1 = wb.addWorksheet('Umsatzplanung');
+    var cols1 = [{ header: 'Position', key: 'pos', width: 28 }];
+    for (var i = 0; i < 12; i++) cols1.push({ header: monthLabels[i], key: 'm' + i, width: 12 });
+    cols1.push({ header: 'Gesamt', key: 'sum', width: 14 });
+    ws1.columns = cols1;
+    styleHeader(ws1, 14);
+
+    function addRow1(label, values) {
+      var row = { pos: label };
+      var total = 0;
+      for (var i = 0; i < 12; i++) { row['m' + i] = values[i]; total += values[i]; }
+      row.sum = total;
+      var r = ws1.addRow(row);
+      for (var c = 2; c <= 14; c++) r.getCell(c).numFmt = euroFmt;
+      return r;
+    }
+
+    addRow1('Stunden/Tag', stunden);
+    addRow1('Arbeitstage/Monat', Array(12).fill(arbeitstage));
+    addRow1('Nettoumsatz', rev);
+    var sumRow1 = ws1.addRow({});
+    sumRow1.getCell(1).value = 'JAHRESUMSATZ';
+    sumRow1.getCell(1).font = boldFont;
+    var yearRev = rev.reduce(function(a, b) { return a + b; }, 0);
+    sumRow1.getCell(14).value = yearRev;
+    sumRow1.getCell(14).numFmt = euroFmt;
+    sumRow1.getCell(14).font = boldFont;
+    for (var c = 1; c <= 14; c++) { sumRow1.getCell(c).fill = sumFill; }
+
+    // --- Sheet 2: Betriebskosten ---
+    var ws2 = wb.addWorksheet('Betriebskosten');
+    var cols2 = [{ header: 'Position', key: 'pos', width: 28 }];
+    for (var i = 0; i < 12; i++) cols2.push({ header: monthLabels[i], key: 'm' + i, width: 12 });
+    cols2.push({ header: 'Gesamt', key: 'sum', width: 14 });
+    ws2.columns = cols2;
+    styleHeader(ws2, 14);
+
+    var bkItems = [
+      ['Miete / Buero', getVal('kosten_miete')],
+      ['Fahrzeugkosten', getVal('kosten_fahrzeug')],
+      ['Versicherungen', getVal('kosten_versicherungen')],
+      ['Werkzeug-Abschreibung', getVal('kosten_werkzeug_abschreibung')],
+      ['Telefon & Internet', getVal('kosten_telefon')],
+      ['Buchhaltung', getVal('kosten_buchhaltung')],
+      ['Marketing', getVal('kosten_marketing')],
+      ['Verbrauchsmaterial', getVal('kosten_verbrauchsmaterial')],
+      ['KFZ-Vers. & Steuer', getVal('kosten_kfz_versicherung_steuer')],
+      ['Sonstige', getVal('kosten_sonstige')]
+    ];
+    for (var bi = 0; bi < bkItems.length; bi++) {
+      addRowConst(ws2, bkItems[bi][0], bkItems[bi][1]);
+    }
+    var sumRow2 = addRowConst(ws2, 'GESAMT', bk);
+    for (var c = 1; c <= 14; c++) { sumRow2.getCell(c).fill = sumFill; sumRow2.getCell(c).font = boldFont; }
+
+    function addRowConst(ws, label, val) {
+      var row = { pos: label };
+      for (var i = 0; i < 12; i++) row['m' + i] = val;
+      row.sum = val * 12;
+      var r = ws.addRow(row);
+      for (var c = 2; c <= 14; c++) r.getCell(c).numFmt = euroFmt;
+      return r;
+    }
+
+    // --- Sheet 3: Privatkosten ---
+    var ws3 = wb.addWorksheet('Privatkosten');
+    ws3.columns = cols2.map(function(c) { return { header: c.header, key: c.key, width: c.width }; });
+    styleHeader(ws3, 14);
+    var pkItems = [
+      ['Krankenversicherung', getVal('kosten_krankenversicherung')],
+      ['Rentenversicherung', getVal('kosten_rentenversicherung')],
+      ['Lebenshaltung', getVal('kosten_lebenshaltung')]
+    ];
+    for (var pi = 0; pi < pkItems.length; pi++) addRowConst(ws3, pkItems[pi][0], pkItems[pi][1]);
+    var sumRow3 = addRowConst(ws3, 'GESAMT', pk);
+    for (var c = 1; c <= 14; c++) { sumRow3.getCell(c).fill = sumFill; sumRow3.getCell(c).font = boldFont; }
+
+    // --- Sheet 4: Investitionen ---
+    var ws4 = wb.addWorksheet('Investitionen');
+    ws4.columns = [{ header: 'Position', key: 'pos', width: 30 }, { header: 'Betrag', key: 'betrag', width: 16 }];
+    styleHeader(ws4, 2);
+    var invItems = [
+      ['Werkzeug & Geraete', getVal('inv_werkzeug')],
+      ['Transporter Anzahlung', getVal('inv_transporter')],
+      ['Marketing Erstausstattung', getVal('inv_marketing')],
+      ['Arbeitskleidung & Schutz', getVal('inv_arbeitskleidung')],
+      ['Laptop & Software', getVal('inv_laptop')],
+      ['Reserve', getVal('inv_reserve')]
+    ];
+    for (var ii = 0; ii < invItems.length; ii++) {
+      var r = ws4.addRow({ pos: invItems[ii][0], betrag: invItems[ii][1] });
+      r.getCell(2).numFmt = euroFmt;
+    }
+    var sumRow4 = ws4.addRow({ pos: 'GESAMT', betrag: invTotal });
+    sumRow4.getCell(1).font = boldFont;
+    sumRow4.getCell(2).font = boldFont;
+    sumRow4.getCell(2).numFmt = euroFmt;
+    sumRow4.getCell(1).fill = sumFill;
+    sumRow4.getCell(2).fill = sumFill;
+
+    // --- Sheet 5: Gruendungszuschuss ---
+    var ws5 = wb.addWorksheet('Gruendungszuschuss');
+    var cols5 = [{ header: 'Position', key: 'pos', width: 28 }];
+    for (var i = 0; i < 12; i++) cols5.push({ header: monthLabels[i], key: 'm' + i, width: 12 });
+    cols5.push({ header: 'Gesamt', key: 'sum', width: 14 });
+    ws5.columns = cols5;
+    styleHeader(ws5, 14);
+
+    var gzRow = { pos: 'Gruendungszuschuss' };
+    var gzTotal = 0;
+    for (var i = 0; i < 12; i++) { gzRow['m' + i] = gz[i]; gzTotal += gz[i]; }
+    gzRow.sum = gzTotal;
+    var r5 = ws5.addRow(gzRow);
+    for (var c = 2; c <= 14; c++) r5.getCell(c).numFmt = euroFmt;
+
+    // --- Sheet 6: Gewinn & Verlust ---
+    var ws6 = wb.addWorksheet('Gewinn & Verlust');
+    var cols6 = [{ header: 'Position', key: 'pos', width: 28 }];
+    for (var i = 0; i < 12; i++) cols6.push({ header: monthLabels[i], key: 'm' + i, width: 12 });
+    cols6.push({ header: 'Gesamt', key: 'sum', width: 14 });
+    ws6.columns = cols6;
+    styleHeader(ws6, 14);
+
+    function addRow6(label, values, bold) {
+      var row = { pos: label };
+      var total = 0;
+      for (var i = 0; i < 12; i++) { row['m' + i] = values[i]; total += values[i]; }
+      row.sum = total;
+      var r = ws6.addRow(row);
+      for (var c = 2; c <= 14; c++) r.getCell(c).numFmt = euroFmt;
+      if (bold) { for (var c = 1; c <= 14; c++) { r.getCell(c).font = boldFont; r.getCell(c).fill = sumFill; } }
+      return r;
+    }
+
+    addRow6('Umsatz', rev, false);
+    addRow6('- Betriebskosten', Array(12).fill(-bk), false);
+    addRow6('- Privatkosten', Array(12).fill(-pk), false);
+    addRow6('+ Gruendungszuschuss', gz, false);
+    var ergebnis = [];
+    var cumErgebnis = [];
+    var cum = 0;
+    for (var i = 0; i < 12; i++) {
+      var e = rev[i] - bk - pk + gz[i];
+      ergebnis.push(Math.round(e));
+      cum += e;
+      cumErgebnis.push(Math.round(cum));
+    }
+    addRow6('= Ergebnis', ergebnis, true);
+    addRow6('Kumuliert', cumErgebnis, true);
+
+    wb.xlsx.writeBuffer().then(function(buffer) {
+      var blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      saveAs(blob, 'Finanzplan_MS.xlsx');
+      setLoading('btn-gen-excel', false);
+      showToast('Finanzplan Excel erstellt!', 'success');
+    });
+  } catch(e) {
+    setLoading('btn-gen-excel', false);
+    showToast('Excel-Fehler: ' + e.message, 'error');
+    console.error(e);
+  }
+}
+
+// ===== LEBENSLAUF PDF =====
+function genLebenslaufPDF() {
+  try {
+    var jsPDF = (window.jspdf && window.jspdf.jsPDF) || (window.jsPDF && window.jsPDF.jsPDF);
+    var doc = new jsPDF('p', 'mm', 'a4');
+    var M = 15, W = 210;
+
+    var inhaber = document.getElementById('firma_inhaber').value || '';
+    var geburt = document.getElementById('gruender_geburtsdatum').value || '';
+    var geburtsort = document.getElementById('gruender_geburtsort').value || '';
+    var staat = document.getElementById('gruender_staatsangehoerigkeit').value || '';
+    var familienstand = document.getElementById('gruender_familienstand').value || '';
+    var standort = document.getElementById('firma_standort').value || '';
+    var telefon = document.getElementById('firma_telefon').value || '';
+    var email = document.getElementById('firma_email').value || '';
+    var fuehrerschein = document.getElementById('fuehrerschein').value || '';
+
+    // Title
+    doc.setFontSize(22);
+    doc.setTextColor(6, 90, 130);
+    doc.text('LEBENSLAUF', M, 22);
+    doc.setFontSize(10);
+    doc.setTextColor(127, 140, 141);
+    doc.text('(Anlage zum Antrag auf Gruendungszuschuss)', M, 29);
+    doc.setDrawColor(6, 90, 130);
+    doc.setLineWidth(0.5);
+    doc.line(M, 32, W - M, 32);
+
+    // Photo
+    if (globalPhotoData) {
+      try { doc.addImage(globalPhotoData, 'JPEG', W - M - 30, 10, 28, 35); } catch(e) {}
+    }
+
+    var y = 42;
+
+    // Persoenliche Daten
+    if (doc.autoTable) {
+      doc.autoTable({
+        startY: y,
+        head: [['PERSOENLICHE DATEN', '']],
+        body: [
+          ['Name', inhaber],
+          ['Geburtsdatum', geburt],
+          ['Geburtsort', geburtsort],
+          ['Staatsangehoerigkeit', staat],
+          ['Familienstand', familienstand],
+          ['Anschrift', standort],
+          ['Telefon', telefon],
+          ['E-Mail', email],
+        ],
+        margin: { left: M, right: M },
+        styles: { fontSize: 10 },
+        headStyles: { fillColor: [6, 90, 130] },
+        columnStyles: { 0: { fontStyle: 'bold', cellWidth: 45 } }
+      });
+      y = doc.lastAutoTable.finalY + 6;
+    }
+
+    // Berufserfahrung
+    if (berufserfahrungData.length > 0 && doc.autoTable) {
+      var beBody = [];
+      for (var i = 0; i < berufserfahrungData.length; i++) {
+        var b = berufserfahrungData[i];
+        beBody.push([b.von + ' - ' + b.bis, b.firma + '\n' + b.position + (b.aufgaben ? '\n' + b.aufgaben : '')]);
+      }
+      doc.autoTable({
+        startY: y,
+        head: [['BERUFSERFAHRUNG', '']],
+        body: beBody,
+        margin: { left: M, right: M },
+        styles: { fontSize: 10 },
+        headStyles: { fillColor: [6, 90, 130] },
+        columnStyles: { 0: { fontStyle: 'bold', cellWidth: 30 } }
+      });
+      y = doc.lastAutoTable.finalY + 6;
+    }
+
+    // Ausbildung
+    if (ausbildungData.length > 0 && doc.autoTable) {
+      var auBody = [];
+      for (var i = 0; i < ausbildungData.length; i++) {
+        var a = ausbildungData[i];
+        auBody.push([a.von + ' - ' + a.bis, a.abschluss + '\n' + a.schule]);
+      }
+      doc.autoTable({
+        startY: y,
+        head: [['AUSBILDUNG / QUALIFIKATIONEN', '']],
+        body: auBody,
+        margin: { left: M, right: M },
+        styles: { fontSize: 10 },
+        headStyles: { fillColor: [6, 90, 130] },
+        columnStyles: { 0: { fontStyle: 'bold', cellWidth: 30 } }
+      });
+      y = doc.lastAutoTable.finalY + 6;
+    }
+
+    // Sprachen
+    if (sprachenData.length > 0 && doc.autoTable) {
+      var spBody = [];
+      for (var i = 0; i < sprachenData.length; i++) {
+        spBody.push([sprachenData[i].sprache, sprachenData[i].niveau]);
+      }
+      doc.autoTable({
+        startY: y,
+        head: [['SPRACHKENNTNISSE', '']],
+        body: spBody,
+        margin: { left: M, right: M },
+        styles: { fontSize: 10 },
+        headStyles: { fillColor: [6, 90, 130] },
+        columnStyles: { 0: { fontStyle: 'bold', cellWidth: 45 } }
+      });
+      y = doc.lastAutoTable.finalY + 6;
+    }
+
+    // Besondere Kenntnisse
+    if (doc.autoTable) {
+      doc.autoTable({
+        startY: y,
+        head: [['BESONDERE KENNTNISSE', '']],
+        body: [
+          ['Fachkenntnisse', 'Elektroinstallation, Netzwerktechnik, Hausmeisterservice'],
+          ['Fuehrerschein', fuehrerschein],
+        ],
+        margin: { left: M, right: M },
+        styles: { fontSize: 10 },
+        headStyles: { fillColor: [6, 90, 130] },
+        columnStyles: { 0: { fontStyle: 'bold', cellWidth: 45 } }
+      });
+      y = doc.lastAutoTable.finalY + 14;
+    }
+
+    // Unterschrift
+    doc.setDrawColor(189, 195, 199);
+    doc.line(M, y, M + 80, y);
+    doc.setFontSize(9);
+    doc.setTextColor(127, 140, 141);
+    doc.text(standort + ', den ' + new Date().toLocaleDateString('de-DE') + '                    ' + inhaber, M, y + 5);
+
+    doc.save('Lebenslauf_MS.pdf');
+    showToast('Lebenslauf PDF erstellt!', 'success');
+  } catch(e) {
+    showToast('PDF-Fehler: ' + e.message, 'error');
+    console.error(e);
+  }
+}
+
+// ===== INIT =====
+function initLists() {
+  renderBerufserfahrung();
+  renderAusbildung();
+  renderSprachen();
+  renderElektro();
+  renderHausmeister();
+}
+
+// Event delegation for auto-save
+document.querySelector('.content').addEventListener('input', function(e) {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') {
+    triggerAutoSave();
+    if (e.target.id && e.target.id.startsWith('fin_') || e.target.id && e.target.id.startsWith('kosten_') || e.target.id && e.target.id.startsWith('inv_') || e.target.id && e.target.id.startsWith('gz_')) {
+      calcPreview();
+    }
+  }
+});
+
+// Start
+initLists();
+autoRestore();
+calcPreview();
+</script>
+
+</body>
+</html>
